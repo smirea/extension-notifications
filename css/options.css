@@ -1,9 +1,55 @@
-html{
-  background: #eaeaea;
+html {
+  background: #fafafa;
 }
-#main{
-  border: 1px solid #ccc;
+
+body {
   background: #fff;
-  width: 640px;
+  margin: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  width: 600px;
   margin: 0 auto;
+}
+
+.page {
+  margin: 5px 0;
+  padding: 5px 0;
+}
+
+.page + .page {
+  border-top: 1px solid #ccc;
+}
+
+#options a {
+  display: inline-block;
+  margin: 0 3px;
+}
+
+.big { width: 250px; }
+
+.ng-label {
+  display: table-row;
+}
+
+.ng-label > * {
+  display: table-cell;
+  margin: 2px;
+}
+
+.ng-label-text {
+  margin-right: 5px;
+  width: 100px;
+  cursor: pointer;
+}
+
+.ng-label.multi-row .ng-label-text {
+  visibility: hidden;
+}
+
+.page-commands {
+  text-align: center;
+}
+
+.hidden {
+  display: none;
 }
