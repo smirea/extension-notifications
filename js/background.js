@@ -7,7 +7,6 @@ var icons = {};
 reloadOptions();
 
 chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
-  reloadOptions();
   switch (request.action) {
     case 'setBaseIcon':
       var url = request.favIconUrl || sender.tab.favIconUrl;
@@ -48,19 +47,15 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 
     case 'reloadOptions':
       reloadOptions();
+      refreshTabs();
       break;
 
     default:
-      console.warn('[onMessage] Unknown protocol `' + request.action + '`', request);
+      logger.warn('[onMessage] Unknown protocol `' + request.action + '`', request);
   }
 });
 
-// Setup existing tabs.
-chrome.tabs.query({}, function (tabs) {
-  for (var i=0; i<tabs.length; ++i) {
-    initTab(tabs[i]);
-  }
-});
+refreshTabs();
 
 // Listen for future tab updates.
 chrome.tabs.onUpdated.addListener(function (tabId, info) {
@@ -69,18 +64,37 @@ chrome.tabs.onUpdated.addListener(function (tabId, info) {
 });
 
 /**
+ * Trigger/re-trigger icon update on matching tabs.
+ * Also initializes new tabs.
+ */
+function refreshTabs () {
+  chrome.tabs.query({}, function (tabs) {
+    for (var i=0; i<tabs.length; ++i) {
+      initTab(tabs[i]);
+    }
+  });
+}
+
+/**
  * Check if a tab matches a rule and if so insert the content-scripts.
  * @param  {Object} tab
  */
 function initTab (tab) {
   var opt = getOptions(tab.url, options);
   if (!opt) { return; }
-  console.info('Initializing tab %d: %s', tab.id, tab.url);
+  logger.info('Initializing tab %d: %s', tab.id, tab.url);
   syncLoading(['js/utils.js', 'js/contentscript.js'], tab.id);
 }
 
 function reloadOptions () {
   options = ls.get('options', {});
+  logLevel = options.logLevel;
+  if (!options.shrinkIcon) {
+    FIC.background = {x: 0, y: 0, width: 16, height: 16,};
+  } else {
+    FIC.background = {x: 3, y: 3, width: 14,  height: 14};
+  }
+  console.log('Options Reloaded');
 }
 
 /**
@@ -96,7 +110,7 @@ function getOptions (url, opt, ignoreEnabled) {
       var pattern = parse_match_pattern(opt.pages[i].urls[j]);
 
       if (!pattern) {
-        console.warn('Invalid URL: %s', opt.pages[i].urls[j]);
+        logger.error('Invalid URL: %s', opt.pages[i].urls[j]);
         continue;
       }
 

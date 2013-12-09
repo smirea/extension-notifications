@@ -21,19 +21,21 @@ app.controller('OptionsController', ['$scope', function ($scope) {
     },
   };
   var firstInit = !ls.get(master.name);
+  var reloadOptionsInterval;
+  var optionsDirty = false;
 
   add_methods($scope);
   $scope.restore();
   migrateOptions($scope.form, master);
-  $scope.$watch('form', $scope.save.bind($scope), true);
+  addWatches();
 
   if (firstInit) {
     var facebook = getDefaultPage();
     facebook.urls = ["*://*.facebook.com/*"];
     facebook.selectors = [
-      '#requestsCountValue',
-      '#mercurymessagesCountValue',
-      '#notificationsCountValue',
+      '.hasNew #requestsCountValue',
+      '.hasNew #mercurymessagesCountValue',
+      '.hasNew #notificationsCountValue',
     ];
 
     $scope.form.pages = [facebook];
@@ -75,6 +77,23 @@ app.controller('OptionsController', ['$scope', function ($scope) {
     $scope.isSaveDisabled = function() {
       return $scope.myForm.$invalid || angular.equals(master, $scope.form);
     };
+  }
+
+  function addWatches () {
+    $scope.$watch('form', function () {
+      $scope.save();
+      optionsDirty = true;
+    }, true);
+
+    clearInterval(reloadOptionsInterval);
+    reloadOptionsInterval = setInterval(function () {
+      if (!optionsDirty) {
+        return;
+      }
+
+      chrome.extension.sendMessage({action:'reloadOptions',});
+      optionsDirty = false;
+    }, 200);
   }
 
   function getDefaultPage () {

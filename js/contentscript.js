@@ -1,8 +1,7 @@
 
 (function () {
-  var oldHref = (document.querySelector('link[rel="shortcut icon"]') || {}).href;
   var oldNumber = 0;
-  var counters;
+  var selector;
   var options;
 
   // Cleanup after previous injections.
@@ -35,9 +34,9 @@
       options = data.options;
       logLevel = options.logLevel;
 
-      counters = document.querySelectorAll(options.page.selectors.join(', '));
+      selector = options.page.selectors.join(', ');
       logger.info('[Notification-Counter] Initializing with options:', options);
-      logger.log('[Notification-Counter] Counters:', counters);
+      logger.log('[Notification-Counter] selector:', selector);
       resetInterval();
       callback();
     });
@@ -45,15 +44,30 @@
 
   function resetInterval () {
     clearInterval(window.FIC_inteval);
-    window.FIC_inteval = setTimeout(function _updateIcon () {
-      if (!counters) { return; }
-
+    window.FIC_inteval = setInterval(function _updateIcon () {
+      var counters = document.querySelectorAll(selector);
       var sum = 0;
 
+      var finish = function () {
+        if (sum != oldNumber) {
+          if (sum == 0) {
+            setFavIcon(window.FIC_favIconUrl);
+          } else {
+            updateIcon(sum);
+          }
+        };
+        oldNumber = sum;
+      }
+
+      if (!counters || counters.length <= 0) {
+        sum = 0;
+        finish();
+        return;
+      }
+
       for (var i=0; i<counters.length; ++i) {
-        if (!counters[i]) {
-          continue;
-        }
+        if (!counters[i]) { continue; }
+
         var val;
         switch (counters[i].nodeName.toLowerCase()) {
           case 'input':
@@ -67,15 +81,7 @@
         sum += isNaN(number) ? 0 : number;
       }
 
-      if (sum != oldNumber) {
-        if (sum == 0) {
-          setFavIcon(oldHref);
-        } else {
-          updateIcon(sum);
-        }
-      };
-
-      oldNumber = sum;
+      finish();
     }, 500);
   }
 
