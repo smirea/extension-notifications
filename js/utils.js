@@ -59,6 +59,81 @@ var ls = {
 };
 
 /**
+ * Gets a match pattern (http://developer.chrome.com/extensions/match_patterns.html)
+ *  and return a RegExp String to match against.
+ *
+ * @param {String} input  A match pattern.
+ * @returns  null if input is invalid.
+ * @returns  {String} to be passed to the RegExp constructor
+ */
+function parse_match_pattern (str) {
+  if (typeof str !== 'string') return null;
+
+  var match_pattern = '(?:^';
+  var regEscape = function(s) {return s.replace(/[[^$.|?*+(){}\\]/g, '\\$&');};
+  var result = /^(\*|https?|file|ftp|chrome-extension):\/\//.exec(str);
+
+  // Parse scheme
+  if (!result) return null;
+  str = str.substr(result[0].length);
+  match_pattern += result[1] === '*' ? 'https?://' : result[1] + '://';
+
+  // Parse host if scheme is not `file`
+  if (result[1] !== 'file') {
+      if (!(result = /^(?:\*|(\*\.)?([^\/*]+))(?=\/)/.exec(str))) return null;
+      str = str.substr(result[0].length);
+      if (result[0] === '*') {    // host is '*'
+          match_pattern += '[^/]+';
+      } else {
+          if (result[1]) {         // Subdomain wildcard exists
+              match_pattern += '(?:[^/]+\\.)?';
+          }
+          // Append host (escape special regex characters)
+          match_pattern += regEscape(result[2]);
+      }
+  }
+
+  // Add remainder (path)
+  match_pattern += str.split('*').map(regEscape).join('.*');
+  match_pattern += '$)';
+
+  return match_pattern;
+}
+
+/**
+ * Sequencially load the files.
+ * @param  {Object}   files
+ * @param  {Number}   tab
+ * @param  {Number}   index = 0
+ * @param  {Function} callback
+ */
+function syncLoading (files, tab, index, callback) {
+  tab = tab || null;
+  index = index || 0;
+  callback = callback || function _emptyCallback () {};
+
+  var fileObject = typeof files[index] === 'object' ? files[index]
+                                                      : { file: files[index] };
+  var extension = fileObject.file.slice(fileObject.file.lastIndexOf('.')+1);
+  var loadFunction = extension === 'js' ? 'executeScript' : 'insertCSS';
+
+  chrome.tabs[loadFunction](
+    tab,
+    fileObject,
+    (function _setupNextCallback (newFile, newIndex) {
+      return function _callNextSyncLoading () {
+        if (index + 1 < files.length) {
+          syncLoading(files, tab, newIndex, callback);
+        } else {
+          callback(files);
+        }
+      };
+    }(fileObject, index+1))
+  );
+}
+
+
+/**
  * Downloads any content to a file of any size
  * @param  {String} name
  * @param  {String} text
