@@ -1,2 +1,2 @@
-# Notification Counter - Chrome Extension
+## Notification Counter - Chrome Extension
 
