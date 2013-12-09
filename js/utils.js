@@ -1,4 +1,28 @@
 
+// Which of the log functions to use. Default = ALL
+// 1 - error, 2 - warn, 3 - info, 4 - log
+var logLevel = 4;
+
+/**
+ * Wrapper for console.* logging functions which either print or not depending
+ * on logLevel above.
+ */
+var logger = (function () {
+  var order = ['error', 'warn', 'info', 'log'];
+  var obj = {};
+
+  for (var i=0; i<order.length; ++i) {
+    (function (index, name) {
+      obj[name] = function () {
+        if (logLevel < index) { return; }
+        return console[name].apply(console, arguments);
+      };
+    })(i, order[i]);
+  }
+
+  return obj;
+})();
+
 /**
  * localStorage enhancer. Auto JSON.stringify and JSON.encodes all the elements.
  * @type {Object}
@@ -101,37 +125,13 @@ function parse_match_pattern (str) {
 }
 
 /**
- * Sequencially load the files.
- * @param  {Object}   files
- * @param  {Number}   tab
- * @param  {Number}   index = 0
- * @param  {Function} callback
+ * Performs a deep copy of the object (in a not very efficient nor save manner).
+ * @param  {Object} obj
+ * @return {Object}
  */
-function syncLoading (files, tab, index, callback) {
-  tab = tab || null;
-  index = index || 0;
-  callback = callback || function _emptyCallback () {};
-
-  var fileObject = typeof files[index] === 'object' ? files[index]
-                                                      : { file: files[index] };
-  var extension = fileObject.file.slice(fileObject.file.lastIndexOf('.')+1);
-  var loadFunction = extension === 'js' ? 'executeScript' : 'insertCSS';
-
-  chrome.tabs[loadFunction](
-    tab,
-    fileObject,
-    (function _setupNextCallback (newFile, newIndex) {
-      return function _callNextSyncLoading () {
-        if (index + 1 < files.length) {
-          syncLoading(files, tab, newIndex, callback);
-        } else {
-          callback(files);
-        }
-      };
-    }(fileObject, index+1))
-  );
+function cloneObject (obj) {
+  return JSON.parse(JSON.stringify(obj));
 }
-
 
 /**
  * Downloads any content to a file of any size

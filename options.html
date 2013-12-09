@@ -7,10 +7,36 @@
     <script src="js/angular.js"></script>
     <script src="js/options-controller.js"></script>
   </head>
-  <body>
-    <div ng-controller="OptionsController">
-
+  <body ng-controller="OptionsController">
     <form name="options" id="options">
+      <h3>Global Options:</h3>
+
+      <input ng-label="Shrink Icon:" ng-model="form.shrinkIcon" type="checkbox" required />
+
+      <ng-label label="Background:">
+        <input type="text" ng-model="form.font.background" size="5" maxlength="7" placeholder="e.g. #000" required />
+        <input ng-label-target type="color" ng-model="form.font.background" required />
+      </ng-label>
+
+      <ng-label label="Text:">
+        <input type="text" ng-model="form.font.color" size="5" maxlength="7" placeholder="e.g. #000" required />
+        <input ng-label-target type="color" ng-model="form.font.color" required />
+      </ng-label>
+
+      <!-- <select ng-label="Log level:" ng-model="form.logLevel">
+        <option ng-repeat="(level, name) in ['disabled', 'errors', 'warnings', 'info', 'debug']" value="{{level}}">
+          {{level}} - {{name}}
+        </option>
+      </select> -->
+
+      <ng-label label="Log Level:">
+        <input ng-model="form.logLevel" ng-label-target type="number" min="0" max="4" step="1" />
+      </ng-label>
+
+      <hr />
+
+      <h3>Pages:</h3>
+
       <div ng-repeat="page in form.pages" class="page">
         <input ng-label="Enabled:" type="checkbox" ng-model="page.enabled" required />
 
@@ -19,8 +45,8 @@
           <span class="ng-label-content">
             <input id="urls-{{$index}}" type="text" ng-model="page.urls[$index]" class="big" />
             <span class="inline-commands">
-              <a href="javascript:void(0)" ng-click="remove(page.urls, $index)" ng-show="$first !== $last">Remove URL</a>
-              <a href="javascript:void(0)" ng-click="add(page.urls)"  ng-class="{hidden:!$last}">Add URL</a>
+              <a href="javascript:void(0)" ng-click="remove(page.urls, $index)" ng-class="{hidden:$last && $first}">remove</a>
+              <a href="javascript:void(0)" ng-click="add(page.urls)"  ng-class="{hidden:!$last}">add</a>
             </span>
           </span>
         </span>
@@ -29,33 +55,35 @@
           <div ng-repeat="selector in page.selectors track by $index">
             <input ng-label-target type="text" ng-model="page.selectors[$index]" class="big" />
             <span class="inline-commands">
-              <a href="javascript:void(0)" ng-click="remove(page.selectors, $index)">Remove Selector</a>
-              <a href="javascript:void(0)" ng-click="add(page.selectors)"  ng-class="{hidden:!$last}">Add Selector</a>
+              <a href="javascript:void(0)" ng-click="remove(page.selectors, $index)"ng-class="{hidden:$last && $first}">remove</a>
+              <a href="javascript:void(0)" ng-click="add(page.selectors)"  ng-class="{hidden:!$last}">add</a>
             </span>
           </div>
         </ng-label>
 
         <ng-label label="Background:">
-          <input type="text" ng-model="page.backgroundColor" size="5" maxlength="7" placeholder="e.g. #000" required />
-          <input ng-label-target type="color" ng-model="page.backgroundColor" required />
+          <input type="text" ng-model="page.font.background" size="5" maxlength="7" placeholder="e.g. #000" required />
+          <input ng-label-target type="color" ng-model="page.font.background" required />
         </ng-label>
 
         <ng-label label="Text:">
-          <input type="text" ng-model="page.textColor" size="5" maxlength="7" placeholder="e.g. #000" required />
-          <input ng-label-target type="color" ng-model="page.textColor" required />
+          <input type="text" ng-model="page.font.color" size="5" maxlength="7" placeholder="e.g. #000" required />
+          <input ng-label-target type="color" ng-model="page.font.color" required />
         </ng-label>
 
         <div class="page-commands">
-          <a href="javascript:void(0)" ng-click="removePage($index)">Remove Page</a>
+          <a href="javascript:void(0)" ng-click="removePage($index)" ng-class="{hidden: $last && $first}">Remove Page</a>
           <a href="javascript:void(0)" ng-click="addPage($index + 1)">Add a New Page</a>
         </div>
 
       </div>
     </form>
 
-    <hr/>
-    Debug View:
-    <pre>form={{form | json}}</pre>
+    <div ng-class="{hidden:form.logLevel < 3}">
+      <hr/>
+      <h3>Debug View:</h3>
+      <pre>form={{form | json}}</pre>
     </div>
+
   </body>
 </html>

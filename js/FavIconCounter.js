@@ -16,25 +16,50 @@ var FavIconCounter = {
   canvas: null,
   ctx: null,
   backgroundImage: null,
+
+  /**
+   * Resets the canvas and sets the background image.
+   * @param  {Node} backgroundImage Optional.
+   */
   setupCanvas: function (backgroundImage) {
     this.backgroundImage = backgroundImage || this.backgroundImage;
-    // if (!this.backgroundImage) {
-    //   console.warn('[FavIconCounter.setupCanvas] No background image!');
-    // }
+    if (!this.backgroundImage) {
+      console.warn('[FavIconCounter.setupCanvas] No background image!');
+    }
     this.canvas = document.createElement('canvas');
     this.ctx = this.canvas.getContext('2d');
     this.canvas.height = 16;
     this.canvas.width = 16;
     if (this.backgroundImage) {
       this.ctx.drawImage(
-        this.backgroundImage, 
+        this.backgroundImage,
         this.background.x,
         this.background.y,
-        this.background.width, 
+        this.background.width,
         this.background.height
       );
     }
   },
+
+  /**
+   * Create an image element and async call setupCanvas(image);
+   * @param  {String}   url
+   * @param  {Function} callback Optional.
+   */
+  loadImage: function (url, callback) {
+    var that = this;
+    var img = document.createElement('img');
+    img.onload = function () {
+      that.setupCanvas(this);
+      (callback || function () {})(this);
+    };
+    img.src = url;
+  },
+
+  /**
+   * Create a favicon element with the current image in the canvas.
+   * @return {Node}
+   */
   makeFavIcon: function () {
     var link = document.createElement('link');
     link.rel = 'icon';
@@ -42,6 +67,11 @@ var FavIconCounter = {
     link.href = this.canvas.toDataURL(this.exportFormat);
     return link;
   },
+
+  /**
+   * Sets the canvas text.
+   * @param {Number} text
+   */
   setText: function (text) {
     this.ctx.fillStyle = this.font.background;
     this.ctx.fillRect(0,
@@ -55,13 +85,4 @@ var FavIconCounter = {
     this.ctx.fillStyle = this.font.color;
     this.ctx.fillText(text, 1, this.font.size - 1);
   },
-  removeFavIcons: function () {
-    var favIcons = document.querySelectorAll('link[rel]');
-    var relTypes = ['shortcut', 'icon', 'shortcut icon'];
-    for (var i=0; i<favIcons.length; ++i) {
-      if (relTypes.indexOf(favIcons[i].rel) > -1) {
-        favIcons[i].parentNode.removeChild(favIcons[i]);
-      }
-    }
-  }
 };

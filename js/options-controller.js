@@ -7,31 +7,39 @@
 var app = angular.module('OptionsModule', []);
 
 app.controller('OptionsController', ['$scope', function ($scope) {
-  var defaultPage = {
-    enabled: true,
-    urls: [''],
-    selectors: [''],
-    backgroundColor: '#FF0000',
-    textColor: '#FFFFFF',
-  };
-
-  var facebook = angular.copy(defaultPage);
-  facebook.urls = ["http://*.facebook.com/*", "https://*.facebook.com/*"];
-  facebook.selectors = [
-    '#requestsCountValue',
-    '#mercurymessagesCountValue',
-    '#notificationsCountValue',
-  ];
-
   var master = {
     name: 'options',
-    pages: [facebook]
+    logLevel: logLevel,
+    shrinkIcon: true,
+    pages: [],
+    font: {
+      size : 10,
+      style: '',
+      family: '"lucida grande", tahoma, verdana, arial, sans-serif',
+      color: '#ffffff',
+      background: '#F03D25'
+    },
   };
+  var firstInit = !ls.get(master.name);
 
   add_methods($scope);
   $scope.restore();
-
+  migrateOptions($scope.form, master);
   $scope.$watch('form', $scope.save.bind($scope), true);
+
+  if (firstInit) {
+    var facebook = getDefaultPage();
+    facebook.urls = ["*://*.facebook.com/*"];
+    facebook.selectors = [
+      '#requestsCountValue',
+      '#mercurymessagesCountValue',
+      '#notificationsCountValue',
+    ];
+
+    $scope.form.pages = [facebook];
+  }
+
+  firstInit = false;
 
   function add_methods ($scope) {
 
@@ -41,6 +49,7 @@ app.controller('OptionsController', ['$scope', function ($scope) {
 
     $scope.restore = function () {
       $scope.form = angular.copy(ls.get(master.name, master));
+      $scope.save();
     };
 
     $scope.reset = function() {
@@ -52,7 +61,7 @@ app.controller('OptionsController', ['$scope', function ($scope) {
     $scope.remove = function (arr, index) { arr.splice(index, 1); };
 
     $scope.addPage = function (index) {
-      $scope.form.pages.splice(index, 0, angular.copy(defaultPage));
+      $scope.form.pages.splice(index, 0, getDefaultPage());
     };
 
     $scope.removePage = function (index) {
@@ -66,6 +75,24 @@ app.controller('OptionsController', ['$scope', function ($scope) {
     $scope.isSaveDisabled = function() {
       return $scope.myForm.$invalid || angular.equals(master, $scope.form);
     };
+  }
+
+  function getDefaultPage () {
+    return {
+      enabled: true,
+      urls: [''],
+      selectors: [''],
+      font: angular.copy($scope.form.font),
+    };
+  }
+
+  function migrateOptions (currentOpt, defaultOpt) {
+    for (var key in defaultOpt) {
+      if (!(key in currentOpt)) {
+        currentOpt[key] = defaultOpt[key];
+        console.warn('Migrating option: %s', key);
+      }
+    }
   }
 }]);
 
@@ -123,3 +150,18 @@ app.directive('ngLabel', function () {
     },
   };
 });
+
+// app.directive('ngColorinput', function () {
+//   return {
+//     restrict: 'E',
+//     replace: true,
+//     scope: {
+//       label: '@',
+//       model: '@',
+//     },
+//     template: '<ng-label label="{{label}}">' +
+//                 '<input type="text" ng-model="{{model}}" size="5" maxlength="7" placeholder="e.g. #000" />' +
+//                 '<input ng-label-target type="color" ng-model="{{model}}" />' +
+//               '</ng-label>',
+//   };
+// });
