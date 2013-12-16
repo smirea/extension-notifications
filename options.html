@@ -9,7 +9,10 @@
   </head>
   <body ng-controller="OptionsController">
     <form name="options" id="options">
-      <h3>Global Options:</h3>
+      <ng-options-header header="Default Options">
+        The options defined here will be used as defaults for every new page. <br />
+        These will not change the current page options, use the Pages section bellow for that.
+      </ng-options-header>
 
       <input ng-label="Shrink Icon:" ng-model="form.shrinkIcon" type="checkbox" required />
 
@@ -35,7 +38,9 @@
 
       <hr />
 
-      <h3>Pages:</h3>
+      <ng-options-header header="Pages">
+        Change the individual styles and options of every page.
+      </ng-options-header>
 
       <div ng-repeat="page in form.pages" class="page">
         <input ng-label="Enabled:" type="checkbox" ng-model="page.enabled" required />
@@ -69,6 +74,13 @@
         <ng-label label="Text:">
           <input type="text" ng-model="page.font.color" size="5" maxlength="7" placeholder="e.g. #000" required />
           <input ng-label-target type="color" ng-model="page.font.color" required />
+        </ng-label>
+
+        <ng-label label="Gradient:">
+          <div ng-class="{hidden:page.font.gradient.length > 0}">
+            <ng-gradient-point model="page.font.gradient[0]"></ng-gradient-point>
+          </div>
+          <div ng-class="{hidden:page.font.gradient.length === 0}">more yolo</div>
         </ng-label>
 
         <div class="page-commands">

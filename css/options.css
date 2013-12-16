@@ -11,6 +11,13 @@ body {
   margin: 0 auto;
 }
 
+h3 .description {
+  padding-left: 8px;
+  font-size: 0.6em;
+  font-weight: none;
+  color: #889;
+}
+
 .page {
   margin: 5px 0;
   padding: 5px 0;

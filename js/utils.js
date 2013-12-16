@@ -93,6 +93,9 @@ var ls = {
 function parse_match_pattern (str) {
   if (typeof str !== 'string') return null;
 
+  // Don't consider the # part.
+  str = str.split('#')[0];
+
   var match_pattern = '(?:^';
   var regEscape = function(s) {return s.replace(/[[^$.|?*+(){}\\]/g, '\\$&');};
   var result = /^(\*|https?|file|ftp|chrome-extension):\/\//.exec(str);

@@ -16,13 +16,16 @@ app.controller('OptionsController', ['$scope', function ($scope) {
       size : 10,
       style: '',
       family: '"lucida grande", tahoma, verdana, arial, sans-serif',
-      color: '#ffffff',
-      background: '#F03D25'
+      color: '#FFFFFF',
+      background: '#F03D25',
+      gradient: [{
+        color: '#FFFFFF',
+        background: '#00FF00',
+        startAt: 1,
+      }],
     },
   };
   var firstInit = !ls.get(master.name);
-  var reloadOptionsInterval;
-  var optionsDirty = false;
 
   add_methods($scope);
   $scope.restore();
@@ -30,15 +33,50 @@ app.controller('OptionsController', ['$scope', function ($scope) {
   addWatches();
 
   if (firstInit) {
-    var facebook = getDefaultPage();
-    facebook.urls = ["*://*.facebook.com/*"];
-    facebook.selectors = [
-      '.hasNew #requestsCountValue',
-      '.hasNew #mercurymessagesCountValue',
-      '.hasNew #notificationsCountValue',
-    ];
+    var predefined = {
+      facebook: {
+        urls: ["*://*.facebook.com/*"],
+        selectors: [
+          '.hasNew #requestsCountValue',
+          '.hasNew #mercurymessagesCountValue',
+          '.hasNew #notificationsCountValue',
+        ],
+      },
+      twitter: {
+        urls: ['*://twitter.com/*'],
+        selectors: ['.new-tweets-bar'],
+      },
+      googlePlus: {
+        urls: ['*://plus.google.com/*'],
+        selectors: ['.gb_ua.gb_va'],
+        font: {background:'#000000'},
+      },
+      stackOverflow: {
+        urls: ['*://*.stackoverflow.com/*'],
+        selectors: ['.icon-inbox .unread-count'],
+      },
+      localhost: {
+        urls: ['http://localhost:8000/test.html'],
+        selectors: ['input,textarea,select,.use-me'],
+      }
+    };
 
-    $scope.form.pages = [facebook];
+    // Copies the predefined objects onto a defaultPage() each up to a depth of 2.
+    for (var name in predefined) {
+      var obj = getDefaultPage();
+      for (var key in predefined[name]) {
+        // If object, we must go deeper.
+        if (typeof obj[key] == 'object' && typeof predefined[name][key] == 'object') {
+          for (var k in predefined[name][key]) {
+            obj[key][k] = predefined[name][key][k];
+          }
+          continue;
+        }
+
+        obj[key] = predefined[name][key];
+      }
+      $scope.form.pages.push(obj);
+    }
   }
 
   firstInit = false;
@@ -80,20 +118,17 @@ app.controller('OptionsController', ['$scope', function ($scope) {
   }
 
   function addWatches () {
+    var typingTimeout;
+
     $scope.$watch('form', function () {
+      clearTimeout(typingTimeout);
       $scope.save();
-      optionsDirty = true;
+      typingTimeout = setTimeout(reloadOptions, 50);
     }, true);
 
-    clearInterval(reloadOptionsInterval);
-    reloadOptionsInterval = setInterval(function () {
-      if (!optionsDirty) {
-        return;
-      }
-
+    function reloadOptions () {
       chrome.extension.sendMessage({action:'reloadOptions',});
-      optionsDirty = false;
-    }, 200);
+    }
   }
 
   function getDefaultPage () {
@@ -167,6 +202,37 @@ app.directive('ngLabel', function () {
       }
       target.attr({id:scope.id});
     },
+  };
+});
+
+app.directive('ngOptionsHeader', function () {
+  return {
+    restrict: 'E',
+    transclude: true,
+    replace: true,
+    scope: {
+      header: '@',
+    },
+    template: '<h3>{{header}}<div ng-transclude class="description"></div></h3>',
+  };
+});
+
+app.directive('ngGradientPoint', function () {
+  return {
+    restrict: 'E',
+    replace: true,
+    scope: {
+      model: '@',
+    },
+    template: '<span class="gradient-point">' +
+                '<button title="Remove this point">-</button>' +
+                '<input type="number" ng-model="" min="1" max="99" />' +
+                '<button title="Add a new point after this">+</button>' +
+                '<div>' +
+                  '<input type="color">' +
+                  '<input type="color">' +
+                '</div>' +
+              '</span>',
   };
 });
 
